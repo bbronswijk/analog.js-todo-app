@@ -1,6 +1,6 @@
 import {
   ChangeDetectionStrategy,
-  Component, OnInit, inject, DestroyRef, effect, input
+  Component, OnInit, inject, DestroyRef, effect, input, ChangeDetectorRef
 } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -43,6 +43,7 @@ import { PatchTodoRequestType } from '../../server/routes/v1/todo/[id].patch';
 export class TodoComponent implements OnInit {
   private store = inject(TodoState);
   private destroyRef = inject(DestroyRef);
+  private changeDetectorRef = inject(ChangeDetectorRef);
 
   public form: FormGroup = new FormGroup({
     completed: new FormControl(false, { nonNullable: true }),
@@ -57,6 +58,7 @@ export class TodoComponent implements OnInit {
         description: this.todo().description,
         completed: this.todo().completed
       }, { emitEvent: false });
+      this.changeDetectorRef.detectChanges();
     }, { allowSignalWrites: true });
   }
 
