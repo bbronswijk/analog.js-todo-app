@@ -5,6 +5,12 @@ This is a solution to the [Todo app challenge on Frontend Mentor](https://www.fr
 
 This project was generated with [Analog](https://analogjs.org), the fullstack meta-framework for Angular.
 
+## Preview
+
+[View on vercel](https://analog-js-todo-app.vercel.app/)
+
+## Screenshot
+
 ![screenshot.png](screenshot.png)
 
 ## The challenge
