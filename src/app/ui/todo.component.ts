@@ -1,27 +1,28 @@
 import {
   ChangeDetectionStrategy,
-  Component, OnInit, inject, DestroyRef, effect, input, ChangeDetectorRef
+  Component, OnInit, inject, DestroyRef, effect, input
 } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Todo } from '@prisma/client';
 import { CheckboxComponent } from './checkbox.component';
 import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TodoState } from '../state/todo.state';
-import { PatchTodoRequestType } from '../../server/routes/v1/todo/[id].patch';
 
 @Component({
   selector: 'app-todo',
   template: `
-    <form [formGroup]="form" class="flex relative border-b border-border group">
-      <input formControlName="description"
-             type="text"
+    <form class="flex relative border-b border-border group">
+      <input type="text"
+             [formControl]="description"
              class="bg-transparent text-card-foreground border-none pr-6 pl-16 py-5 w-full focus:outline-none"
-             [class.line-through]="form.get('completed')?.value"
-             [class.opacity-25]="form.get('completed')?.value"
+             [class.line-through]="checked()"
+             [class.opacity-25]="checked()"
              placeholder="Describe todo..." />
-      <app-checkbox formControlName="completed"
+      <app-checkbox name="completed"
+                    [ngModel]="checked()"
+                    (ngModelChange)="onToggleCompleted($event)"
                     class="absolute left-6 top-1/2 -translate-y-1/2"/>
       <button type="submit" class="text-card-foreground hover:text-card-hover mr-6 opacity-0 group-hover:opacity-100 duration-300"
               (click)="delete()">
@@ -37,38 +38,39 @@ import { PatchTodoRequestType } from '../../server/routes/v1/todo/[id].patch';
   imports: [
     NgClass,
     ReactiveFormsModule,
-    CheckboxComponent
+    CheckboxComponent,
+    FormsModule
   ]
 })
 export class TodoComponent implements OnInit {
   private store = inject(TodoState);
   private destroyRef = inject(DestroyRef);
-  private changeDetectorRef = inject(ChangeDetectorRef);
 
-  public form: FormGroup = new FormGroup({
-    completed: new FormControl(false, { nonNullable: true }),
-    description: new FormControl('',{ nonNullable: true, validators: [Validators.required] }),
-  });
+  public checked = input.required<boolean>();
+  public description = new FormControl<string>('',{ nonNullable: true, validators: [Validators.required] })
 
   public todo = input.required<Todo>();
 
   constructor() {
     effect(() => {
-      this.form.setValue({
-        description: this.todo().description,
-        completed: this.todo().completed
-      }, { emitEvent: false });
-      this.changeDetectorRef.detectChanges();
+      this.description.setValue(this.todo().description, { emitEvent: false });
     }, { allowSignalWrites: true });
   }
 
+  public onToggleCompleted(completed: boolean): void {
+    this.store.update({ id: this.todo().id, value: { completed } })
+  }
+
+  /**
+   * Debounce the description changes.
+   */
   public ngOnInit(): void {
-    this.form.valueChanges.pipe(
+    this.description?.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef),
-      distinctUntilChanged((a, b) => a.description === b.description && a.completed === b.completed),
-      filter(() => this.form.valid),
+      distinctUntilChanged(),
+      filter(() => this.description.valid),
       debounceTime(500),
-      tap((value: PatchTodoRequestType) => this.store.update({ id: this.todo().id, value }))
+      tap((description: string) => this.store.update({ id: this.todo().id, value: { description } }))
     ).subscribe();
   }
 

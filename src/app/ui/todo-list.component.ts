@@ -7,7 +7,7 @@ import { TodoState } from '../state/todo.state';
   standalone: true,
   template: `
     @for (todo of store.filteredTodos(); track todo.id) {
-      <app-todo [todo]="todo"/>
+      <app-todo [checked]="todo.completed" [todo]="todo"/>
     } @empty {
       <div class="p-6 text-center border-b border-border">Create a todo and start being productive! 🤓</div>
     }

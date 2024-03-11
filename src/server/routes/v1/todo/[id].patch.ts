@@ -6,6 +6,9 @@ import { z } from 'zod';
 export const PatchTodoRequestSchema = todoSchema.pick({
   description: true,
   completed: true,
+}).extend({
+  description: z.string().optional(),
+  completed: z.boolean().optional(),
 });
 
 export type PatchTodoRequestType = z.infer<typeof PatchTodoRequestSchema>;
@@ -19,8 +22,8 @@ export default defineEventHandler(async (event) => {
   return prisma.todo.update({
     where: { id },
     data: {
-      description: data.description,
-      completed: data.completed,
+      ...data.description !== undefined && { description: data.description },
+      ...data.completed !== undefined && { completed: data.completed },
     },
   });
 });
