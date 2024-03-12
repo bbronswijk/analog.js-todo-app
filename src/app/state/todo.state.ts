@@ -81,7 +81,7 @@ export class TodoState {
     pipe(
       mergeMap((todo) => this.todoApi.post(todo).pipe(
         tap((todo: Todo) => patchState(this.#state, {
-          todos: [...this.#state.todos(), todo]
+          todos: [todo, ...this.#state.todos()]
         }))
       ))
     )
